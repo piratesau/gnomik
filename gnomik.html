@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Сумасшедший гномик</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            overscroll-behavior: none;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a3a1a, #2d5a2d, #1a3a1a);
+            min-height: 100vh;
+            min-height: 100dvh;
+            overflow-x: hidden;
+            position: relative;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .grass {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: linear-gradient(180deg, #2d7a2d, #1a4a1a);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .gnome {
+            position: fixed;
+            width: 110px;
+            height: 160px;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            cursor: pointer;
+            pointer-events: none;
+            transform-origin: center bottom;
+        }
+
+        .gnome.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .gnome:not(.caught):hover {
+            filter: drop-shadow(0 0 20px #ff0000) hue-rotate(90deg);
+        }
+
+        .gnome.running {
+            animation: crazyRun 0.18s infinite;
+        }
+
+        @keyframes crazyRun {
+            0% { transform: translateY(0) rotate(-3deg) scaleX(1); }
+            25% { transform: translateY(-6px) rotate(3deg) scaleX(1); }
+            50% { transform: translateY(0) rotate(-3deg) scaleX(1); }
+            75% { transform: translateY(-6px) rotate(3deg) scaleX(1); }
+            100% { transform: translateY(0) rotate(-3deg) scaleX(1); }
+        }
+
+        .gnome.running.flip {
+            animation: crazyRunFlip 0.18s infinite;
+        }
+
+        @keyframes crazyRunFlip {
+            0% { transform: translateY(0) rotate(3deg) scaleX(-1); }
+            25% { transform: translateY(-6px) rotate(-3deg) scaleX(-1); }
+            50% { transform: translateY(0) rotate(3deg) scaleX(-1); }
+            75% { transform: translateY(-6px) rotate(-3deg) scaleX(-1); }
+            100% { transform: translateY(0) rotate(3deg) scaleX(-1); }
+        }
+
+        .gnome.caught {
+            cursor: default;
+            pointer-events: auto;
+            animation: crazyCaught 0.4s infinite;
+            filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.9)) hue-rotate(-30deg) saturate(2);
+        }
+
+        @keyframes crazyCaught {
+            0% { transform: rotate(-5deg) scale(1); }
+            25% { transform: rotate(5deg) scale(1.03); }
+            50% { transform: rotate(-5deg) scale(1); }
+            75% { transform: rotate(5deg) scale(1.03); }
+            100% { transform: rotate(-5deg) scale(1); }
+        }
+
+        .gnome.drop-hover {
+            filter: drop-shadow(0 0 40px #ffff00) hue-rotate(180deg) brightness(1.5) !important;
+        }
+
+        .hat {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 42px solid transparent;
+            border-right: 42px solid transparent;
+            border-bottom: 68px solid #ff0000;
+            filter: drop-shadow(2px 3px 3px rgba(0,0,0,0.5));
+            animation: hatWobble 0.4s infinite;
+        }
+
+        @keyframes hatWobble {
+            0% { transform: translateX(-50%) rotate(-4deg); }
+            50% { transform: translateX(-50%) rotate(4deg); }
+            100% { transform: translateX(-50%) rotate(-4deg); }
+        }
+
+        .hat::after {
+            content: '⚡';
+            position: absolute;
+            bottom: -60px;
+            left: -25px;
+            font-size: 20px;
+        }
+
+        .hat::before {
+            content: '';
+            position: absolute;
+            bottom: -68px;
+            left: -42px;
+            width: 84px;
+            height: 13px;
+            background: #cc0000;
+            border-radius: 50%;
+            box-shadow: 0 0 12px #ff0000;
+        }
+
+        .face {
+            position: absolute;
+            top: 54px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 68px;
+            height: 58px;
+            background: #ffe0b3;
+            border-radius: 50% 50% 45% 45%;
+            z-index: 2;
+            box-shadow: 0 0 15px rgba(255, 100, 0, 0.6), inset 0 -4px 10px rgba(200, 0, 0, 0.3);
+        }
+
+        .beard {
+            position: absolute;
+            top: 102px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 62px;
+            height: 54px;
+            background: #f0f0f0;
+            border-radius: 0 0 32px 32px;
+            z-index: 1;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+            animation: beardJiggle 0.25s infinite;
+        }
+
+        @keyframes beardJiggle {
+            0% { transform: translateX(-50%) rotate(-2deg); }
+            50% { transform: translateX(-50%) rotate(2deg); }
+            100% { transform: translateX(-50%) rotate(-2deg); }
+        }
+
+        .eye {
+            position: absolute;
+            top: 14px;
+            width: 18px;
+            height: 22px;
+            background: #fff;
+            border-radius: 50%;
+            border: 2px solid #000;
+            overflow: hidden;
+            z-index: 3;
+        }
+
+        .eye .pupil {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 8px;
+            height: 10px;
+            background: #000;
+            border-radius: 50%;
+            animation: eyeDart 0.5s infinite;
+        }
+
+        @keyframes eyeDart {
+            0% { transform: translate(-2px, 0); }
+            25% { transform: translate(3px, -2px); }
+            50% { transform: translate(3px, 3px); }
+            75% { transform: translate(-3px, 2px); }
+            100% { transform: translate(-2px, 0); }
+        }
+
+        .eye.left { left: 9px; }
+        .eye.right { right: 9px; }
+
+        .nose {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 18px;
+            height: 15px;
+            background: #ff8888;
+            border-radius: 50%;
+            z-index: 4;
+            box-shadow: 0 0 8px #ff0000;
+            animation: nosePulse 0.3s infinite;
+        }
+
+        @keyframes nosePulse {
+            0% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.2); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+
+        .mouth {
+            position: absolute;
+            bottom: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 36px;
+            height: 18px;
+            background: #4a0000;
+            border-radius: 0 0 50% 50%;
+            border: 2px solid #2a0000;
+            z-index: 4;
+            overflow: hidden;
+            animation: mouthChomp 0.25s infinite;
+        }
+
+        @keyframes mouthChomp {
+            0% { height: 8px; }
+            50% { height: 22px; }
+            100% { height: 8px; }
+        }
+
+        .mouth::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: #fff;
+        }
+
+        .mouth::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: #fff;
+        }
+
+        .hand {
+            position: absolute;
+            width: 28px;
+            height: 33px;
+            background: #ffe0b3;
+            border-radius: 14px;
+            z-index: 3;
+            animation: handFlail 0.2s infinite;
+        }
+
+        @keyframes handFlail {
+            0% { transform: rotate(20deg) translateY(0); }
+            50% { transform: rotate(-30deg) translateY(-6px); }
+            100% { transform: rotate(20deg) translateY(0); }
+        }
+
+        .hand.left {
+            top: 94px;
+            left: -4px;
+            transform-origin: top right;
+        }
+
+        .hand.right {
+            top: 94px;
+            right: -4px;
+            transform-origin: top left;
+            animation: handFlailRight 0.2s infinite;
+        }
+
+        @keyframes handFlailRight {
+            0% { transform: rotate(-20deg) translateY(0); }
+            50% { transform: rotate(30deg) translateY(-6px); }
+            100% { transform: rotate(-20deg) translateY(0); }
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 14px 32px;
+            font-size: 1em;
+            font-weight: bold;
+            color: #fff;
+            background: linear-gradient(180deg, #44aa44, #2d7a2d);
+            border: 3px solid #1a5a1a;
+            border-radius: 50px;
+            cursor: grab;
+            transition: transform 0.15s ease, filter 0.15s ease;
+            box-shadow: 0 5px 0 #1a5a1a, 0 8px 15px rgba(0,0,0,0.4);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin: 8px;
+            position: relative;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        .btn:active {
+            cursor: grabbing;
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #1a5a1a, 0 4px 8px rgba(0,0,0,0.4);
+        }
+
+        .btn.dragging {
+            opacity: 0.4;
+        }
+
+        .btn.drop-hover {
+            background: linear-gradient(180deg, #ffee44, #ddcc22) !important;
+            color: #333 !important;
+            filter: drop-shadow(0 0 25px #ffff00) !important;
+            transform: scale(1.08) translateY(-3px) !important;
+        }
+
+        .btn-result {
+            display: inline-block;
+            padding: 14px 32px;
+            font-size: 1em;
+            font-weight: bold;
+            color: #fff;
+            background: linear-gradient(180deg, #dd44dd, #992299);
+            border: 3px solid #661166;
+            border-radius: 50px;
+            cursor: grab;
+            transition: transform 0.15s ease, filter 0.15s ease;
+            box-shadow: 0 5px 0 #661166, 0 8px 15px rgba(0,0,0,0.4);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin: 8px;
+            position: relative;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        .btn-result:active {
+            cursor: grabbing;
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #661166, 0 4px 8px rgba(0,0,0,0.4);
+        }
+
+        .btn-result.dragging {
+            opacity: 0.4;
+        }
+
+        .btn-result.drop-hover {
+            background: linear-gradient(180deg, #ffee44, #ddcc22) !important;
+            color: #333 !important;
+            filter: drop-shadow(0 0 25px #ffff00) !important;
+            transform: scale(1.08) translateY(-3px) !important;
+        }
+
+        .buttons-area {
+            position: relative;
+            z-index: 50;
+            padding: 30px 12px 100px;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 6px;
+            animation: popIn 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.5); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .units-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .unit {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, #44aa44, #2d7a2d);
+            border: 2px solid #66dd66;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.7em;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+            box-shadow: 0 5px 12px rgba(0,0,0,0.4), inset 0 2px 6px rgba(255,255,255,0.2);
+            animation: unitPop 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+            opacity: 0;
+            transform: scale(0);
+            cursor: grab;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        .unit:active {
+            cursor: grabbing;
+            box-shadow: 0 0 20px #66ff66, 0 5px 12px rgba(0,0,0,0.4);
+        }
+
+        .unit.dragging {
+            opacity: 0.4;
+        }
+
+        @keyframes unitPop {
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .unit:nth-child(1) { animation-delay: 0.05s; }
+        .unit:nth-child(2) { animation-delay: 0.15s; }
+        .unit:nth-child(3) { animation-delay: 0.25s; }
+        .unit:nth-child(4) { animation-delay: 0.35s; }
+
+        .hint {
+            position: fixed;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.9);
+            font-size: 0.85em;
+            z-index: 10;
+            text-align: center;
+            pointer-events: none;
+            letter-spacing: 0.5px;
+            background: rgba(0,0,0,0.55);
+            padding: 8px 18px;
+            border-radius: 30px;
+            transition: opacity 0.4s ease;
+            max-width: 92vw;
+            line-height: 1.3;
+        }
+
+        .hint.hidden {
+            opacity: 0;
+        }
+
+        .caught-msg {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            color: #ff3333;
+            font-size: 2.2em;
+            font-weight: bold;
+            text-shadow: 0 0 30px #ff0000, 0 0 60px #ff0000;
+            z-index: 200;
+            pointer-events: none;
+            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.5s ease;
+            opacity: 0;
+            white-space: nowrap;
+        }
+
+        .caught-msg.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+
+        .btn-main {
+            animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+
+        .cross-effect {
+            position: fixed;
+            pointer-events: none;
+            z-index: 500;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ffff00, #ff6600, #ff0000, transparent);
+            animation: crossBurst 0.7s ease-out forwards;
+            transform: translate(-50%, -50%);
+        }
+
+        @keyframes crossBurst {
+            0% { transform: translate(-50%, -50%) scale(0) rotate(0deg); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(4) rotate(720deg); opacity: 0; }
+        }
+
+        .particle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 499;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #ffaa00;
+            animation: particleFly 0.8s ease-out forwards;
+        }
+
+        @keyframes particleFly {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--px), var(--py)) scale(0); opacity: 0; }
+        }
+
+        .lightning {
+            position: fixed;
+            pointer-events: none;
+            z-index: 150;
+            font-size: 30px;
+            animation: lightningFlash 0.4s ease-out forwards;
+        }
+
+        @keyframes lightningFlash {
+            0% { opacity: 1; transform: scale(0.5) rotate(-20deg); }
+            100% { opacity: 0; transform: scale(1.5) rotate(20deg); }
+        }
+
+        .drag-clone {
+            position: fixed;
+            pointer-events: none;
+            z-index: 1000;
+            margin: 0 !important;
+            opacity: 0.9 !important;
+            transform: scale(1.15) !important;
+            filter: drop-shadow(0 0 25px #ffff00) brightness(1.3) !important;
+        }
+
+        @media (max-width: 480px) {
+            .gnome {
+                width: 90px;
+                height: 130px;
+            }
+
+            .hat {
+                border-left-width: 34px;
+                border-right-width: 34px;
+                border-bottom-width: 55px;
+            }
+
+            .hat::before {
+                bottom: -55px;
+                left: -34px;
+                width: 68px;
+                height: 11px;
+            }
+
+            .hat::after {
+                bottom: -50px;
+                left: -20px;
+                font-size: 16px;
+            }
+
+            .face {
+                top: 44px;
+                width: 56px;
+                height: 48px;
+            }
+
+            .beard {
+                top: 84px;
+                width: 52px;
+                height: 44px;
+            }
+
+            .eye {
+                width: 15px;
+                height: 18px;
+                top: 12px;
+            }
+
+            .eye.left { left: 7px; }
+            .eye.right { right: 7px; }
+
+            .eye .pupil {
+                width: 7px;
+                height: 8px;
+                top: 3px;
+                left: 3px;
+            }
+
+            .nose {
+                top: 25px;
+                width: 15px;
+                height: 12px;
+            }
+
+            .mouth {
+                bottom: 5px;
+                width: 30px;
+                height: 14px;
+            }
+
+            .hand {
+                width: 24px;
+                height: 28px;
+                top: 78px;
+            }
+
+            .btn, .btn-result {
+                padding: 12px 26px;
+                font-size: 0.9em;
+                letter-spacing: 1px;
+                margin: 6px;
+            }
+
+            .unit {
+                width: 44px;
+                height: 44px;
+                font-size: 1.4em;
+            }
+
+            .caught-msg {
+                font-size: 1.8em;
+            }
+
+            .hint {
+                font-size: 0.75em;
+                padding: 7px 14px;
+            }
+
+            .buttons-area {
+                padding: 20px 8px 80px;
+            }
+
+            .grass {
+                height: 45px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .btn, .btn-result {
+                padding: 10px 20px;
+                font-size: 0.8em;
+            }
+
+            .unit {
+                width: 38px;
+                height: 38px;
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="grass"></div>
+    <div class="hint" id="hint">😈 Поймай сумасшедшего гномика! 😈</div>
+    <div class="caught-msg" id="caughtMsg">🤪 ПОЙМАЛ! 🤪</div>
+
+    <div class="gnome" id="gnome">
+        <div class="hat"></div>
+        <div class="face">
+            <div class="eye left"><div class="pupil"></div></div>
+            <div class="eye right"><div class="pupil"></div></div>
+            <div class="nose"></div>
+            <div class="mouth"></div>
+        </div>
+        <div class="beard"></div>
+        <div class="hand left"></div>
+        <div class="hand right"></div>
+    </div>
+
+    <div class="buttons-area" id="buttonsArea"></div>
+
+    <script>
+        const gnome = document.getElementById('gnome');
+        const hint = document.getElementById('hint');
+        const caughtMsg = document.getElementById('caughtMsg');
+        const buttonsArea = document.getElementById('buttonsArea');
+
+        const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+        let gnomeTimer = null;
+        let gnomeHideTimer = null;
+        let gnomeCaught = false;
+        let isDragging = false;
+        let lightningInterval = null;
+
+        function getGnomeSize() {
+            const rect = gnome.getBoundingClientRect();
+            return { w: rect.width || 110, h: rect.height || 160 };
+        }
+
+        function moveGnomeRandomly() {
+            const size = getGnomeSize();
+            const maxX = window.innerWidth - size.w - 10;
+            const maxY = window.innerHeight - size.h - 80;
+            const x = Math.max(5, Math.random() * maxX);
+            const y = Math.max(5, Math.random() * maxY);
+
+            const currentX = parseFloat(gnome.style.left) || 0;
+            const direction = x < currentX ? -1 : 1;
+
+            gnome.style.transition = 'left 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55), top 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s ease';
+            gnome.style.left = x + 'px';
+            gnome.style.top = y + 'px';
+
+            if (direction === 1) {
+                gnome.classList.remove('flip');
+            } else {
+                gnome.classList.add('flip');
+            }
+
+            gnome.classList.add('running');
+        }
+
+        function createLightning() {
+            if (gnomeCaught) return;
+            const bolt = document.createElement('div');
+            bolt.className = 'lightning';
+            bolt.textContent = '⚡';
+            const gnomeRect = gnome.getBoundingClientRect();
+            bolt.style.left = (gnomeRect.left + Math.random() * gnomeRect.width) + 'px';
+            bolt.style.top = (gnomeRect.top + Math.random() * gnomeRect.height) + 'px';
+            document.body.appendChild(bolt);
+            setTimeout(() => bolt.remove(), 400);
+        }
+
+        function showGnome() {
+            if (gnomeCaught) return;
+
+            gnome.classList.add('visible', 'running');
+
+            if (!lightningInterval) {
+                lightningInterval = setInterval(createLightning, 350);
+            }
+
+            gnomeHideTimer = setTimeout(() => {
+                if (gnomeCaught) return;
+
+                gnome.classList.remove('visible');
+
+                if (lightningInterval) {
+                    clearInterval(lightningInterval);
+                    lightningInterval = null;
+                }
+
+                setTimeout(() => {
+                    if (!gnomeCaught) moveGnomeRandomly();
+                }, 400);
+
+                const nextAppear = Math.random() * 2000 + 1500;
+                gnomeTimer = setTimeout(showGnome, nextAppear);
+            }, 2000);
+        }
+
+        gnome.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (gnomeCaught || isDragging) return;
+            catchGnome();
+        });
+
+        gnome.addEventListener('touchend', function(e) {
+            e.stopPropagation();
+            if (gnomeCaught || isDragging) return;
+            e.preventDefault();
+            catchGnome();
+        }, { passive: false });
+
+        function catchGnome() {
+            gnomeCaught = true;
+            clearTimeout(gnomeTimer);
+            clearTimeout(gnomeHideTimer);
+
+            if (lightningInterval) {
+                clearInterval(lightningInterval);
+                lightningInterval = null;
+            }
+
+            gnome.classList.remove('running', 'flip');
+            gnome.classList.add('visible', 'caught');
+
+            caughtMsg.classList.add('show');
+            setTimeout(() => {
+                caughtMsg.classList.remove('show');
+            }, 1800);
+
+            hint.textContent = '🧪 Перетащи единицу или кнопку на другую цель!';
+            hint.classList.remove('hidden');
+            setTimeout(() => {
+                hint.classList.add('hidden');
+            }, 6000);
+
+            setTimeout(() => {
+                createMainButton();
+            }, 500);
+        }
+
+        function createMainButton() {
+            const group = createButtonGroup(true);
+            buttonsArea.appendChild(group);
+        }
+
+        function createButtonGroup(isMain) {
+            const group = document.createElement('div');
+            group.className = 'button-group';
+
+            const btn = document.createElement('button');
+            btn.className = 'btn' + (isMain ? ' btn-main' : '');
+            btn.textContent = 'Добавить';
+
+            const unitsRow = document.createElement('div');
+            unitsRow.className = 'units-row';
+            unitsRow.style.display = 'none';
+
+            let touchMoved = false;
+
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (isDragging || touchMoved) {
+                    touchMoved = false;
+                    return;
+                }
+                showUnits(unitsRow);
+            });
+
+            btn.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (isDragging) return;
+                buttonsArea.appendChild(createButtonGroup(false));
+            });
+
+            attachButtonDrag(btn);
+
+            group.appendChild(btn);
+            group.appendChild(unitsRow);
+            return group;
+        }
+
+        function createResultButton() {
+            const group = document.createElement('div');
+            group.className = 'button-group';
+
+            const btn = document.createElement('button');
+            btn.className = 'btn-result';
+            btn.textContent = 'Получается';
+
+            const unitsRow = document.createElement('div');
+            unitsRow.className = 'units-row';
+            unitsRow.style.display = 'none';
+
+            let touchMoved = false;
+
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (isDragging || touchMoved) {
+                    touchMoved = false;
+                    return;
+                }
+                showUnits(unitsRow);
+            });
+
+            btn.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (isDragging) return;
+                buttonsArea.appendChild(createResultButton());
+            });
+
+            attachButtonDrag(btn);
+
+            group.appendChild(btn);
+            group.appendChild(unitsRow);
+            return group;
+        }
+
+        function showUnits(unitsRow) {
+            const count = Math.floor(Math.random() * 3) + 2;
+            unitsRow.innerHTML = '';
+
+            for (let i = 0; i < count; i++) {
+                const unit = createUnit();
+                unitsRow.appendChild(unit);
+            }
+
+            unitsRow.style.display = 'flex';
+        }
+
+        function createUnit() {
+            const unit = document.createElement('div');
+            unit.className = 'unit';
+            unit.textContent = '1';
+
+            unit.addEventListener('pointerdown', function(e) {
+                startDrag(e, 'unit');
+            });
+
+            return unit;
+        }
+
+        function attachButtonDrag(btn) {
+            btn.addEventListener('pointerdown', function(e) {
+                if (e.button !== 0 && e.pointerType === 'mouse') return;
+                startDrag(e, 'button');
+            });
+        }
+
+        let dragElement = null;
+        let dragType = null;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+        let currentDropTarget = null;
+        let pointerDownPos = null;
+        let pointerId = null;
+
+        function startDrag(e, type) {
+            if (!gnomeCaught && type === 'button') return;
+
+            dragElement = e.currentTarget;
+            dragType = type;
+            isDragging = false;
+            pointerId = e.pointerId;
+
+            const rect = dragElement.getBoundingClientRect();
+            dragOffsetX = e.clientX - rect.left;
+            dragOffsetY = e.clientY - rect.top;
+
+            pointerDownPos = { x: e.clientX, y: e.clientY };
+
+            document.addEventListener('pointermove', onPointerMove, { passive: false });
+            document.addEventListener('pointerup', onPointerUp);
+            document.addEventListener('pointercancel', onPointerUp);
+
+            try {
+                e.currentTarget.setPointerCapture(e.pointerId);
+            } catch (err) {}
+        }
+
+        function onPointerMove(e) {
+            if (!dragElement || e.pointerId !== pointerId) return;
+
+            const dx = e.clientX - pointerDownPos.x;
+            const dy = e.clientY - pointerDownPos.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            const threshold = isMobile ? 6 : 8;
+
+            if (!isDragging && dist < threshold) return;
+
+            if (!isDragging) {
+                isDragging = true;
+                e.preventDefault();
+
+                const rect = dragElement.getBoundingClientRect();
+
+                const clone = dragElement.cloneNode(true);
+                clone.style.position = 'fixed';
+                clone.style.left = rect.left + 'px';
+                clone.style.top = rect.top + 'px';
+                clone.style.width = rect.width + 'px';
+                clone.style.height = rect.height + 'px';
+                clone.classList.add('drag-clone');
+                clone.id = 'dragClone';
+
+                document.body.appendChild(clone);
+
+                dragElement.classList.add('dragging');
+            }
+
+            const clone = document.getElementById('dragClone');
+            if (clone) {
+                clone.style.left = (e.clientX - dragOffsetX) + 'px';
+                clone.style.top = (e.clientY - dragOffsetY) + 'px';
+            }
+
+            const target = getDropTarget(e.clientX, e.clientY, dragElement);
+
+            if (currentDropTarget !== target) {
+                if (currentDropTarget) {
+                    currentDropTarget.classList.remove('drop-hover');
+                }
+                if (target) {
+                    target.classList.add('drop-hover');
+                }
+                currentDropTarget = target;
+            }
+        }
+
+        function getDropTarget(x, y, excludeElement) {
+            const gnomeRect = gnome.getBoundingClientRect();
+            if (x >= gnomeRect.left && x <= gnomeRect.right &&
+                y >= gnomeRect.top && y <= gnomeRect.bottom) {
+                return gnome;
+            }
+
+            const elements = document.querySelectorAll('.btn, .btn-result');
+            for (const el of elements) {
+                if (el === excludeElement) continue;
+                const rect = el.getBoundingClientRect();
+                if (x >= rect.left && x <= rect.right &&
+                    y >= rect.top && y <= rect.bottom) {
+                    return el;
+                }
+            }
+
+            return null;
+        }
+
+        function onPointerUp(e) {
+            if (e.pointerId && pointerId && e.pointerId !== pointerId) return;
+
+            document.removeEventListener('pointermove', onPointerMove);
+            document.removeEventListener('pointerup', onPointerUp);
+            document.removeEventListener('pointercancel', onPointerUp);
+
+            if (!dragElement) return;
+
+            const clone = document.getElementById('dragClone');
+            if (clone) clone.remove();
+
+            dragElement.classList.remove('dragging');
+
+            if (currentDropTarget) {
+                currentDropTarget.classList.remove('drop-hover');
+            }
+
+            const target = currentDropTarget;
+
+            if (isDragging && target) {
+                createCrossEffect(e.clientX || 0, e.clientY || 0);
+
+                if (dragType === 'unit') {
+                    dragElement.remove();
+                }
+
+                if (target === gnome) {
+                    const newGroup = createResultButton();
+                    const firstGroup = buttonsArea.querySelector('.button-group');
+                    if (firstGroup) {
+                        firstGroup.parentNode.insertBefore(newGroup, firstGroup.nextSibling);
+                    } else {
+                        buttonsArea.appendChild(newGroup);
+                    }
+                } else if (target.classList.contains('btn') || target.classList.contains('btn-result')) {
+                    const newGroup = createResultButton();
+                    buttonsArea.appendChild(newGroup);
+                }
+            }
+
+            dragElement = null;
+            dragType = null;
+            currentDropTarget = null;
+            pointerDownPos = null;
+            pointerId = null;
+
+            setTimeout(() => {
+                isDragging = false;
+            }, 80);
+        }
+
+        function createCrossEffect(x, y) {
+            const effect = document.createElement('div');
+            effect.className = 'cross-effect';
+            effect.style.left = x + 'px';
+            effect.style.top = y + 'px';
+            document.body.appendChild(effect);
+
+            const particleCount = isMobile ? 8 : 12;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                const angle = (Math.PI * 2 * i) / particleCount;
+                const dist = 60 + Math.random() * 60;
+                particle.style.setProperty('--px', Math.cos(angle) * dist + 'px');
+                particle.style.setProperty('--py', Math.sin(angle) * dist + 'px');
+                particle.style.background = ['#ffaa00', '#ff4400', '#ffff00', '#ff0000'][i % 4];
+                document.body.appendChild(particle);
+                setTimeout(() => particle.remove(), 800);
+            }
+
+            setTimeout(() => {
+                effect.remove();
+            }, 700);
+        }
+
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                if (!gnomeCaught) {
+                    moveGnomeRandomly();
+                }
+            }, 300);
+        });
+
+        window.addEventListener('resize', () => {
+            if (!gnomeCaught && gnome.classList.contains('visible')) {
+                const size = getGnomeSize();
+                const maxX = window.innerWidth - size.w - 10;
+                const maxY = window.innerHeight - size.h - 80;
+                const currentX = parseFloat(gnome.style.left) || 0;
+                const currentY = parseFloat(gnome.style.top) || 0;
+                if (currentX > maxX) gnome.style.left = Math.max(5, maxX) + 'px';
+                if (currentY > maxY) gnome.style.top = Math.max(5, maxY) + 'px';
+            }
+        });
+
+        gnome.style.left = '50%';
+        gnome.style.top = '40%';
+        moveGnomeRandomly();
+        setTimeout(showGnome, 1000);
+    </script>
+
+</body>
+</html>
